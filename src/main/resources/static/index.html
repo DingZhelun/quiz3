@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Earthquake Information</title>
+    <!--根据自己的项目目录修改-->
+    <link rel="stylesheet" href="layui/css/layui.css" media="all"/>
+</head>
+<body>
+<!--头部-->
+<div style="margin: 10px 0 10px 1%;width: 99%">
+    <h1>Zhelun Ding 1001888813</h1>
+</div>
+
+<div style="margin: 10px 0 10px 1%;width: 99%">
+    <div style="display: table-cell">
+        <form class="layui-form" id="search_form">
+            <div class="layui-input-block" style="display: table-cell">
+                <!--            <label>&emsp;接&emsp;口&emsp;</label>-->
+                <div class="layui-input-inline" style="width: 260px">
+
+                    <input type="text" name="small_time2" placeholder="please input the smaller time2"
+                           autocomplete="off" class="layui-input">
+                    <input type="text" name="large_time2" placeholder="please input the larger time2"
+                           autocomplete="off" class="layui-input">
+                    <input type="text" name="mag_type" placeholder="please input the magtype"
+                           autocomplete="off" class="layui-input">
+                </div>
+            </div>
+
+            <div style="display: table-cell">
+                <button class="layui-btn layui-btn-sm layui-btn-danger" lay-submit lay-filter="search"
+                        style="margin-left: 15px"><i class="layui-icon">&#xe615;</i>Search
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div style="display: table-cell">
+        <div style="display: table">
+            <!--刷新-->
+            <div style="display: table-cell;">
+                <button id="refresh" class="layui-btn layui-btn-normal layui-btn-sm" style="margin-left: 15px">
+                    <i class="layui-icon">&#xe669;</i> Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div>
+    <p id="count">the total number of quakes is :</p>
+</div>
+
+<table id="earthquake_table"></table>
+
+<script src="layui/layui.js"></script>
+<script src="js/libs/jquery-2.1.1.min.js"></script>
+<script src="utils/common.js"></script>
+
+
+<script>
+    layui.use(['table', 'layer', 'form', 'laypage'], function () {
+        var table = layui.table;
+        var form = layui.form;
+
+        table.render({
+            elem: '#earthquake_table'
+            , id: 'goodsReload'
+            , even: true //开启隔行背景
+            , url: '/earthquake/earthquakeList'
+            , request: {
+                pageName: 'pageNum',
+                limitName: 'pageSize'
+            }
+            // , toolbar: '#goods_headerBar'
+            , title:
+                'Earthquake Information'
+            , page:
+                true //开启分页
+            , limit: 10
+            , limits: [1, 5, 10, 20, 50, 100]
+            , cols:
+                [[{field: 'time', title: 'time', align: 'center'}
+                    , {field: 'time2', title: 'time2', align: 'center'}
+                    , {field: 'latitude', title: 'latitude', align: 'center'}
+                    , {field: 'longitude', title: 'longitude', align: 'center'}
+                    , {field: 'depth', title: 'depth',  align: 'center'}
+                    , {field: 'mag', title: 'mag', align: 'center'}
+                    , {field: 'magType', title: 'magType',  align: 'center'}
+                    , {field: 'net', title: 'net',  align: 'center'}
+                    , {field: 'place', title: 'place',  align: 'center'}
+                ]]
+        });
+
+        $("#refresh").click(function () {
+            // 执行一个表格重载即实现刷新功能
+            table.reload('goodsReload', {
+                where: '',
+                contentType: 'application/x-www-form-urlencoded',
+                page: {
+                    curr: 1 //重新从第 1 页开始
+                },
+                url: '/earthquake/earthquakeList',
+                method: 'get'
+            });
+        });
+
+
+        // 监听搜索按钮提交事件
+        form.on('submit(search)', function (data) {
+            var formData = data.field;
+            var count = checkForm("search_form");
+            if (count !== 0) {
+                //数据表格重载
+                tableReload('goodsReload', formData, "application/json; charset=utf-8", '/earthquake/searchMagnitude', 'post');
+                var formData = data.field;
+                var mag_type = formData.mag_type;
+                var small_time2 = formData.small_time2;
+                var large_time2 = formData.large_time2;
+                $.ajax({
+                    type: "get",
+                    url: "/earthquake/countPart1?mag_type="+mag_type+"&"+"small_time2="+small_time2+"&large_time2="+large_time2,
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (result){
+                        layer.msg(result.msg, {icon: 1, time: 1000});
+                        $("#count").html("the total number of quakes is :"+result.num);
+                    },
+                    error:function (msg){
+                        console.log(msg);
+                    }
+                })
+            } else {
+                parent.layer.msg('please select the query condition！', {icon: 2, time: 1500});
+            }
+            return false;
+        });
+    });
+</script>
+</body>
+</html>
